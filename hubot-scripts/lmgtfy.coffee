@@ -1,5 +1,5 @@
 # Description:
-#   Returns the URL of the let-me-google|bing-that
+#   Returns the URL of the let-me-google|bing|duckduckgo-that
 # 
 # Dependencies:
 #   None
@@ -8,7 +8,7 @@
 #   None
 #
 # Commands:
-#   hubot lmbtfy|lmgtfy me <query> 
+#   hubot lmbtfy|lmgtfy|lmddgfy me <query> 
 #
 # Author:
 #   johnsinteur
@@ -18,3 +18,5 @@ module.exports = (robot) ->
     msg.send "http://lmbtfy.com/?q=" + msg.match[3]
   robot.respond /(lmgtfy)( me)? (.*)/i, (msg) ->
     msg.send "http://lmgtfy.com/?q=" + msg.match[3]
+  robot.respond /(lmddgtfy)( me)? (.*)/i, (msg) ->
+    msg.send "https://lmddgtfy.net/?q=" + msg.match[3]
