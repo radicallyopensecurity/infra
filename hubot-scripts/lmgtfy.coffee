@@ -8,7 +8,7 @@
 #   None
 #
 # Commands:
-#   hubot lmbtfy|lmgtfy|lmddgfy me <query> 
+#   hubot lmbtfy|lmgtfy|lmddgtfy me <query> 
 #
 # Author:
 #   johnsinteur
