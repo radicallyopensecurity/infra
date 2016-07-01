@@ -1,0 +1,95 @@
+#!/bin/bash 
+
+TEMPLATE_REPO_LOCATION="~/defaultrepo"
+GITLAB_CMD="/usr/local/bin/gitlab"
+GITLAB_SSH_URL="ssh://git@webserver/ros"
+GITLAB_HTTP_URL="https://webserver/ros"
+LOCALREPOCOPIES="/opt/repositories"
+
+SELF_PATH="$(dirname "$(readlink -f "$0")")"; cd $SELF_PATH;
+TMPFILE="/tmp/.handler.$(whoami)"
+DEBUG=1
+
+_log(){
+  which logger &>/dev/null && logger -t hubot -p local3.notice "$*"; return 0
+}
+
+
+check_error(){
+  [[ ! X"$(wc -c "$1" | cut -d" " -f1)" = X"0" ]] && {
+    echo "please check the logs, the command was unsuccesfull :/"
+    cat "$1" | while read line; do _log "$line"; done
+  }
+}
+
+
+PDFLOC=`mktemp -d`
+timestamp=$(date +"%Y-%m-%d_%H-%M-%S")
+
+# Make sure that the temporary files are always removed
+trap cleanup EXIT QUIT
+
+
+cleanup() {
+    trap '' EXIT INT QUIT
+    [ -d $PDFLOC ] && rm -rf $PDFLOC
+    exit
+}
+
+
+[[ $1 ]] && REPO=off-${1,,} || REPO=FAIL
+cd $TEMPLATE_REPO_LOCATION
+git pull -q
+
+
+cd $PDFLOC
+echo "[+] setting up the new gitlabs repo "
+
+if [ $REPO == "FAIL" ] ; then
+	echo "Please tell me the name for the new repo"
+	exit
+fi
+
+# test if it already exists
+cd $LOCALREPOCOPIES
+if [ -d off-$1 ]; then
+   cd off-$1
+   git pull -q
+else
+   git clone -q ssh://git@webserver/ros/off-$1.git 
+
+fi
+
+cd $LOCALREPOCOPIES
+if [ -d $REPO ]; then
+	echo "That repo already exists"
+	exit
+
+fi
+
+
+
+$GITLAB_CMD project add $REPO --wiki --snippets --issues --wall --merge-requests -g 92 > /dev/null 
+
+git clone -q $GITLAB_SSH_URL/$REPO.git 
+
+cd $REPO
+cp -r $TEMPLATE_REPO_LOCATION/templates/xml/* .
+rm -r doc &>/dev/null
+echo "clone url:  $GITLAB_SSH_URL/$1.git" > README.md
+
+cat $TEMPLATE_REPO_LOCATION/General_Info/Kanban/kanban-offerte-checklist.md >> README.md
+cat TEMPLATE_REPO_LOCATION/templates/xml/README.md >> README.md
+git add *  > /dev/null
+git config --global push.default simple
+git commit -a -m 'automatic create by rosbot'  > /dev/null
+git push -q > /dev/null
+echo [+] visit $GITLAB_HTTP_URL/$REPO
+echo " "
+echo [+] or clone $GITLAB_SSH_URL/ros/$REPO.git
+
+
+echo "[+] adding note to kanboard "
+/usr/bin/php -f /opt/rosbot/myhubot/php/handlers/startofferte $1 $2
+
+exit 0

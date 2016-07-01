@@ -1,0 +1,21 @@
+#!/bin/bash 
+SELF_PATH="$(dirname "$(readlink -f "$0")")"; cd $SELF_PATH;
+DEBUG=1
+TMPFILE="/tmp/.handler.$(whoami)"
+
+
+_log(){
+  which logger &>/dev/null && logger -t hubot -p local3.notice "$*"; return 0
+}
+
+
+check_error(){
+  [[ ! X"$(wc -c "$1" | cut -d" " -f1)" = X"0" ]] && {
+    echo "please check the logs, the command was unsuccesfull :/"
+    cat "$1" | while read line; do _log "$line"; done
+  }
+}
+
+/usr/bin/php -f /opt/rosbot/myhubot/php/handlers/cve.php $1
+
+exit 0

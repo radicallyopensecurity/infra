@@ -1,0 +1,9 @@
+#!/bin/bash 
+SELF_PATH="$(dirname "$(readlink -f "$0")")"; cd $SELF_PATH;
+
+
+
+
+/usr/bin/php -f $SELF_PATH/php/handlers/gitissue.php $1 $2
+
+exit 0
