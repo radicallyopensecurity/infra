@@ -90,9 +90,9 @@ class RocketChatClient
         }
     }
     
-    function sendChatMessage($roomID, $message)
+    function sendChatMessage($roomID, $message, $attachments = array(), $options = array())
     {
-        $message_result = $this->client->api('group')->sendMessage($roomID, $message);
+        $message_result = $this->client->api('group')->sendMessage($roomID, $message, $attachments, $options);
         if ($message_result)
         {
             return true;
