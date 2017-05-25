@@ -1,0 +1,21 @@
+{
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://github.com/ffogarasi/rocket-chat-api"
+        },
+        {
+            "type": "git",
+            "url": "https://github.com/ariep/php-gitlab-api"
+        }
+    ],
+    "require":
+    {
+        "m4tthumphrey/php-gitlab-api": "dev-master",
+        "ffogarasi/rocket-chat-api":   "dev-master",
+        "cpliakas/git-wrapper":        "~1.0",
+        "monolog/monolog":             "^1.0",
+        "symfony/process":             "~3.2",
+        "phpmailer/phpmailer":         "~5.2"
+    }
+}
