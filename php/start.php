@@ -15,7 +15,7 @@ require_once(__DIR__ . '/../roles.php');
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
-function startproject($type, $projectName)
+function startproject($type, $projectName, $basedOn = null)
 {
     $log = GlobalLog::$log;
     $kanboardClient = GlobalKanboardClient::$client;
@@ -25,6 +25,32 @@ function startproject($type, $projectName)
     $projectName = validate($projectName);
     $alias = $type . '-' . $projectName;
     $customerName = explode('-', $projectName, 2)[0];
+
+    # Check if the corresponding quote project can be found in case of startpentest.
+    if ($type == Triad::PEN)
+    {
+        # Get corresponding quote repo.
+        try
+        {
+            if (is_null($basedOn))
+            {
+                $lookingFor = Triad::OFF . '-' . $projectName;
+                $quoteTriad = Triad::fromTypeName(Triad::OFF, $projectName);
+            }
+            else
+            {
+                $basedOn = validate($basedOn);
+                $lookingFor = $basedOn;
+                $quoteTriad = Triad::fromAlias($basedOn);
+            }
+        }
+        catch (Exception $e)
+        {
+            $log->error('[-] We could not find the quote project to base this pentest on (looking for *' . $lookingFor . '*).');
+            $log->info('You can specify this quote project as a parameter to startpentest: `startpentest company-project off-company-older-project`');
+            throw new Exception('quote not found');
+        }
+    }
 
     # Add staff members based on roles.
     switch ($type)
@@ -111,7 +137,7 @@ function startproject($type, $projectName)
             initOfferteRepo($projectName, $project);
             break;
         case Triad::PEN:
-            initPentestRepo($projectName, $project);
+            initPentestRepo($projectName, $project, $quoteTriad);
             break;
         case 'test':
             initOfferteRepo($projectName, $project);
@@ -167,7 +193,7 @@ function initOfferteRepo($projectName, $project)
     $log->info('[+] or clone ' . $project['ssh_url_to_repo']);
 }
 
-function initPentestRepo($projectName, $project, $correspondingQuote = null)
+function initPentestRepo($projectName, $project, $quoteTriad)
 {
     $log = GlobalLog::$log;
     $glclient = GlobalGitlabClient::$client;
@@ -186,23 +212,6 @@ function initPentestRepo($projectName, $project, $correspondingQuote = null)
         throw new Exception('saxon not found');
     }
     
-    # Get corresponding quote repo.
-    try
-    {
-        if (is_null($correspondingQuote))
-        {
-            $quoteTriad = Triad::fromTypeName(Triad::OFF, $projectName);
-        }
-        else
-        {
-            $quoteTriad = Triad::fromAlias($correspondingQuote);
-        }
-    }
-    catch (Exception $e)
-    {
-        $log->error('Looking up corresponding quote failed: ' . $e->getMessage());
-        throw new Exception('quote not found');
-    }
     $quoteRepo = new GitlabRepo($glclient, $quoteTriad->gitlabID, $branch);
     
     # Collect quote and client info from corresponding quote.
